@@ -209,8 +209,8 @@ def bench_einsumt(*operands, **kwargs):
         print('Pool type:          %s' % ptype)
         print('Number of threads:  %i' % nproc)
         print('Execution time:')
-        print('    np.einsum:      %1.4g ms  (average from %i runs)' % (T1, N1))
-        print('    einsumt:        %1.4g ms  (average from %i runs)' % (T2, N2))
+        print('    np.einsum:      %1.4g ms  (average from %i runs)' % (T1, N1+1))
+        print('    einsumt:        %1.4g ms  (average from %i runs)' % (T2, N2+1))
         print('Speed up:           %1.3fx' % (T1/T2,))
         print('')
     return T1, T2

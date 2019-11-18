@@ -4,6 +4,12 @@ import numpy as np
 from einsumt import bench_einsumt
 
 
+print('TEST 0')
+a = np.random.rand(100, 100, 10, 10)
+b = np.random.rand(50, 10, 50)
+bench_einsumt('aijk,bkl->ail', a, b)
+
+
 print('TEST 1')
 a = np.random.rand(10000, 10, 10, 10)
 b = np.random.rand(10000, 10, 10, 10)
@@ -39,4 +45,6 @@ a = np.random.rand(10000, 10, 10)
 b = np.random.rand(10000, 10, 10)
 subs = 'aij,ajk->ik'
 bench_einsumt(subs, a, b, idx='a')
-# np.matmul(a, b).sum(0) can be much faster then einsum!
+# np.matmul(a, b).sum(0) can be much faster then einsumt!
+
+
