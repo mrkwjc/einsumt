@@ -8,7 +8,7 @@ Created on Fri Aug 10 09:34:57 2019
 @github: mrkwjc
 @licence: MIT
 """
-
+from __future__ import print_function
 import numpy as np
 from multiprocessing.pool import ThreadPool
 
