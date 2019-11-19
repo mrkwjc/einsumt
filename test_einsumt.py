@@ -97,6 +97,24 @@ class TestEinsumt(object):
         res1 = einsumt(subs, e, f, g, h, optimize=path[0])
         assert np.allclose(res0, res1)        
 
+    def test_implicit1(self):
+        a = np.random.rand(10, 10)
+        b = np.random.rand(10, 10)
+        subs = 'ij,jk'
+        assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b))
+
+    def test_implicit2(self):
+        a = np.random.rand(10, 10)
+        b = np.random.rand(10, 10)
+        subs = 'ij,ji'
+        assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b))
+
+    def test_implicit3(self):
+        a = np.random.rand(10, 100, 10)
+        b = np.random.rand(10, 10)
+        subs = 'i...i'
+        assert np.allclose(np.einsum(subs, a), einsumt(subs, a))
+
 
 if __name__ == '__main__':
     import pytest

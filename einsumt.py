@@ -71,6 +71,9 @@ def einsumt(*operands, **kwargs):
             sis.append(si)
         isubs = sis
         osub = osub.replace('...', free_indices[:ne])  # ne should be always the same
+    if '->' not in subs:  # implicit output
+        iss = ''.join(isubs)
+        osub = ''.join(sorted([s for s in set(iss) if iss.count(s)==1]))
     # Get index along which we will chunk operands
     # If not given we try to search for longest dimension
     if idx is not None:  # and idx in indices...
