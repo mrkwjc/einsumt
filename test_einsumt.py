@@ -11,12 +11,12 @@ class TestEinsumt(object):
         b = np.random.rand(10, 10)
         subs = 'aij,ji->ij'
         assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b, idx='a'))
-    
+
     def test_concatenation_reduction(self):
         a = np.random.rand(100, 10, 10)
         b = np.random.rand(10, 10)
         subs = 'aij,ji->aij'
-        assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b, idx='a'))        
+        assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b, idx='a'))
 
     def test_custom_index(self):
         a = np.random.rand(100, 10, 10)
@@ -37,7 +37,7 @@ class TestEinsumt(object):
         res0 = np.einsum(subs, a, b)
         res1 = einsumt(subs, a, b)
         assert np.allclose(res0, res1)
-    
+
     def test_automatic_index2(self):
         a = np.random.rand(10, 10, 100)
         b = np.random.rand(10, 10)
@@ -67,10 +67,10 @@ class TestEinsumt(object):
         n = cpu_count() - 1
         if n > 0:
             a = np.random.rand(n, 10, 10)
-            b = np.random.rand(10, 10)            
+            b = np.random.rand(10, 10)
             subs = 'aij,ji->ij'
             res0 = np.einsum(subs, a, b)
-            res1 = einsumt(subs, a, b, idx='a')        
+            res1 = einsumt(subs, a, b, idx='a')
             assert np.allclose(res0, res1)
         else:
             pytest.skip("not enough CPUs for this test")
@@ -82,12 +82,12 @@ class TestEinsumt(object):
         subs = 'aij,ji->ij'
         res0 = np.einsum(subs, a, b)
         res1 = einsumt(subs, a, b, pool=ThreadPool())
-        res2 = einsumt(subs, a, b, pool=5)    
+        res2 = einsumt(subs, a, b, pool=5)
         assert np.allclose(res0, res1)
-        assert np.allclose(res0, res2)        
+        assert np.allclose(res0, res2)
 
     def test_muti_operand(self):
-        e = np.random.rand(50, 10) 
+        e = np.random.rand(50, 10)
         f = np.random.rand(50, 10, 10)
         g = np.random.rand(50, 10, 20)
         h = np.random.rand(20, 20, 10)
@@ -95,7 +95,7 @@ class TestEinsumt(object):
         path = np.einsum_path(subs, e, f, g, h)
         res0 = np.einsum(subs, e, f, g, h, optimize=path[0])
         res1 = einsumt(subs, e, f, g, h, optimize=path[0])
-        assert np.allclose(res0, res1)        
+        assert np.allclose(res0, res1)
 
     def test_implicit1(self):
         a = np.random.rand(10, 10)
@@ -111,18 +111,9 @@ class TestEinsumt(object):
 
     def test_implicit3(self):
         a = np.random.rand(10, 100, 10)
-        b = np.random.rand(10, 10)
         subs = 'i...i'
         assert np.allclose(np.einsum(subs, a), einsumt(subs, a))
 
 
 if __name__ == '__main__':
-    import pytest
     pytest.main([str(__file__), '-v'])
-
-    #a = np.random.rand(1000, 10, 10, 10)
-    #b = np.random.rand(1000, 10, 10, 10)
-    #subs = '...kij,...jik->...ik'
-    #res1 = einsump(subs, a, b)
-    #res2 = np.einsum(subs, a, b)
-    #res3 = np.multiply(a, b.transpose(0, 3, 2, 1)).sum(-1).transpose(0, 2, 1)

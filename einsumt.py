@@ -19,39 +19,41 @@ default_thread_pool = ThreadPool()
 def einsumt(*operands, **kwargs):
     """
     Multithreaded version of numpy.einsum function.
-    
+
     The additional accepted keyword arguments are:
 
         pool - specifies the pool of processing threads
-               
-               If 'pool' is None or it is not given, the default pool with the
-               number of threads equal to CPU count is used. If 'pool' is an integer,
-               then it is taken as the number of threads and the new fresh pool is
-               created. Otherwise, the 'pool' attribute is assumed to be
-               a multiprocessing.pool.ThreadPool instance.
-               
-        idx  - specifies the subscript along which operands are divided into chunks
-    
-               Argument 'idx' have to be a single subscript letter, and should
-               be contained in the given subscripts, otherwise ValueError is risen.
-               If 'idx' is None or it is not given, then the longest dimension
-               in operands is searched.
 
-    WARNING: Current implementation allows for string subscripts specification only
+               If 'pool' is None or it is not given, the default pool with the
+               number of threads equal to CPU count is used. If 'pool' is an
+               integer, then it is taken as the number of threads and the new
+               fresh pool is created. Otherwise, the 'pool' attribute is
+               assumed to be a multiprocessing.pool.ThreadPool instance.
+
+        idx  - specifies the subscript along which operands are divided
+               into chunks
+
+               Argument 'idx' have to be a single subscript letter, and should
+               be contained in the given subscripts, otherwise ValueError is
+               risen. If 'idx' is None or it is not given, then the longest
+               dimension in operands is searched.
+
+    WARNING: Current implementation allows for string subscripts
+             specification only
     """
     pool = kwargs.pop('pool', None)
     idx = kwargs.pop('idx', None)
     # If single processor fall back to np.einsum
-    if (pool == 1 or 
-        (pool == None and default_thread_pool._processes == 1) or
-        (hasattr(pool, '_processes') and pool._processes == 1)):
+    if (pool == 1 or
+       (pool is None and default_thread_pool._processes == 1) or
+       (hasattr(pool, '_processes') and pool._processes == 1)):
         return np.einsum(*operands, **kwargs)
     # Assign default thread pool if necessary and get number of threads
     if not hasattr(pool, 'apply_async'):
         pool = default_thread_pool  # mp.pool.ThreadPool(pool)
     nproc = pool._processes
     # Out is popped here becaue it is not used in threads but at return only
-    out = kwargs.pop('out', None) 
+    out = kwargs.pop('out', None)
     # Analyze subs and ops
     # isubs, osub, ops = np.core.einsumfunc._parse_einsum_input(operands)
     subs = operands[0]
@@ -66,26 +68,28 @@ def einsumt(*operands, **kwargs):
         sis = []
         for si, oi in zip(isubs, ops):
             if '...' in si:
-                ne = oi.ndim - len(si.replace('...', ''))  # should be determined once?
+                ne = oi.ndim - len(si.replace('...', ''))  # determine once?
                 si = si.replace('...', free_indices[:ne])
             sis.append(si)
         isubs = sis
-        osub = osub.replace('...', free_indices[:ne])  # ne should be always the same
+        osub = osub.replace('...', free_indices[:ne])  # ne is always the same
     if '->' not in subs:  # implicit output
         iss = ''.join(isubs)
-        osub = ''.join(sorted([s for s in set(iss) if iss.count(s)==1]))
+        osub = ''.join(sorted([s for s in set(iss) if iss.count(s) == 1]))
     # Get index along which we will chunk operands
     # If not given we try to search for longest dimension
     if idx is not None:  # and idx in indices...
         if idx not in iosubs[0]:
-            raise ValueError("Index '%s' is not present in input subscripts" % idx)
+            raise ValueError("Index '%s' is not present in input subscripts"
+                             % idx)
         cidx = idx  # given index for chunks
         cdims = []
         for si, oi in zip(isubs, ops):
             k = si.find(cidx)
-            cdims.append(oi.shape[k] if k >=0 else 0)
+            cdims.append(oi.shape[k] if k >= 0 else 0)
         if len(set(cdims)) > 2:  # set elements can be 0 and one number
-            raise ValueError("Different operand lengths along index '%s'" % idx)
+            raise ValueError("Different operand lengths along index '%s'"
+                             % idx)
         cdim = max(cdims)  # dimension along cidx
     else:
         maxdim = []
@@ -96,10 +100,10 @@ def einsumt(*operands, **kwargs):
             maxdim.append(mdim)
             maxidx.append(midx)
         cdim = max(maxdim)                    # max dimension of input arrays
-        cidx = maxidx[maxdim.index(cdim)]     # index cdim -> chosen index for chunks
+        cidx = maxidx[maxdim.index(cdim)]     # index chosen for chunks
     # Position of established index in subscripts
-    cpos = [si.find(cidx) for si in isubs]  # positions of index in input operands shape
-    opos = osub.find(cidx)                  # position of index in output
+    cpos = [si.find(cidx) for si in isubs]  # positions of cidx in inputs
+    opos = osub.find(cidx)                  # position of cidx in output
     ##
     # Determining chunk ranges
     n, r = divmod(cdim, nproc)  # n - chunk size, r - rest
@@ -112,7 +116,7 @@ def einsumt(*operands, **kwargs):
     for i in range(njobs):
         args = (subs,)
         n1 = n2
-        n2 += n if i>=r else n+1
+        n2 += n if i >= r else n+1
         islice = slice(n1, n2)
         for j in range(len(ops)):
             oj = ops[j]
@@ -122,25 +126,6 @@ def einsumt(*operands, **kwargs):
             args = args + (oj,)
         res += [pool.apply_async(np.einsum, args=args, kwds=kwargs)]
     res = [r.get() for r in res]
-    ###
-    ## Determine number of jobs
-    #n, r = divmod(cdim, nproc)  # n - chunk size, r - rest
-    #njobs = r if n == 0 else nproc    
-    ## Split operands along chosen axis
-    #ops_split = []
-    #for j in range(len(ops)):
-        #if cpos[j] < 0:
-            #ops_split.append([ops[j]]*njobs)
-        #else:
-            #ops_split.append(np.array_split(ops[j], njobs, axis=cpos[j]))
-    ## Submit jobs to pool
-    #res = []
-    #for opsi in zip(*ops_split):
-        #args = (subs,) + opsi
-        #res += [pool.apply_async(np.einsum, args=args, kwds=kwargs)]
-    ## Get results
-    #res = [r.get() for r in res]
-    ###
     # Reduce
     if opos < 0:  # cidx not in output subs, reducing
         res = np.sum(res, axis=0)
@@ -157,19 +142,19 @@ def einsumt(*operands, **kwargs):
 def bench_einsumt(*operands, **kwargs):
     """
     Benchmark function for einsumt.
-    
+
     This function returns a tuple 'res' where res[0] is the execution time
     for np.einsum and res[1] is the execution time for einsumt in miliseconds.
     In addition this information is printed to the screen, unless the keyword
     argument pprint=False is set.
-    
+
     This function accepts all einsumt arguments.
     """
     from time import time
     import platform
     # Prepare kwargs for einsumt
     pprint = kwargs.pop('pprint', True)
-    # Preprocess kwargs 
+    # Preprocess kwargs
     kwargs1 = kwargs.copy()
     pool = kwargs1.pop('pool', None)
     if pool is None:
@@ -189,7 +174,7 @@ def bench_einsumt(*operands, **kwargs):
     N1 = int(divmod(2., dt1)[0])  # we assume 2s of benchmarking
     t0 = time()
     for i in range(N1):
-        res1 = np.einsum(*operands, **kwargs1)
+        np.einsum(*operands, **kwargs1)
     dt1 += time() - t0
     T1 = 1000*dt1/(N1+1)
     # einsumt timing
@@ -199,7 +184,7 @@ def bench_einsumt(*operands, **kwargs):
     N2 = int(divmod(2., dt2)[0])  # we assume 2s of benchmarking
     t0 = time()
     for i in range(N2):
-        res1 = einsumt(*operands, **kwargs1)
+        einsumt(*operands, **kwargs1)
     dt2 += time() - t0
     T2 = 1000*dt2/(N2+1)
     # printing
@@ -207,25 +192,33 @@ def bench_einsumt(*operands, **kwargs):
         print('Platform:           %s' % platform.system())
         print('CPU type:           %s' % _get_processor_name())
         print('Subscripts:         %s' % operands[0])
-        print('Shapes of operands: %s' % str([o.shape for o in operands[1:]])[1:-1])
-        print('Leading index:      %s' % (idx if idx is not None else 'automatic'))
+        print('Shapes of operands: %s' % str([o.shape
+                                              for o in operands[1:]])[1:-1])
+        print('Leading index:      %s' % (idx
+                                          if idx is not None else 'automatic'))
         print('Pool type:          %s' % ptype)
         print('Number of threads:  %i' % nproc)
         print('Execution time:')
-        print('    np.einsum:      %1.4g ms  (average from %i runs)' % (T1, N1+1))
-        print('    einsumt:        %1.4g ms  (average from %i runs)' % (T2, N2+1))
+        print('    np.einsum:      %1.4g ms  (average from %i runs)' % (T1,
+                                                                        N1+1))
+        print('    einsumt:        %1.4g ms  (average from %i runs)' % (T2,
+                                                                        N2+1))
         print('Speed up:           %1.3fx' % (T1/T2,))
         print('')
     return T1, T2
 
 
 def _get_processor_name():
-    import os, platform, subprocess, re, sys
+    import os
+    import platform
+    import subprocess
+    import re
+    import sys
     if platform.system() == "Windows":
         return platform.processor()
     elif platform.system() == "Darwin":
         os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
-        command ="sysctl -n machdep.cpu.brand_string"
+        command = "sysctl -n machdep.cpu.brand_string"
         info = subprocess.check_output(command)
         if sys.version_info[0] >= 3:
             info = info.decode()
@@ -237,10 +230,10 @@ def _get_processor_name():
             all_info = all_info.decode()
         for line in all_info.strip().split("\n"):
             if "model name" in line:
-                return re.sub( ".*model name.*:", "", line,1).strip()
+                return re.sub(".*model name.*:", "", line, 1).strip()
     return ""
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import pytest
     pytest.main(['test_einsumt.py', '-v'])

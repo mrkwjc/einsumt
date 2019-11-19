@@ -47,5 +47,3 @@ b = np.random.rand(10000, 10, 10)
 subs = 'aij,ajk->ik'
 bench_einsumt(subs, a, b, idx='a')
 # np.matmul(a, b).sum(0) can be much faster then einsumt!
-
-
