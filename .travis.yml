@@ -1,0 +1,22 @@
+language: python
+python:
+- 2.7
+- 3.7
+install:
+- python setup.py sdist
+- pip install dist/*
+script:
+- mkdir testing
+- cp test_einsumt.py testing
+- cd testing
+- python test_einsumt.py
+deploy:
+  provider: pypi
+  user: mwojc
+  password:
+    secure: Su/RHkw6Tg4zDVP1gs3BoJeYUPkhK9B5yoB505ovDldiwr0EZFwFWQbmFEXLJFftJ4vlFYR0m9xR1Qp52VN7D923qzcgzkVEJSDvYGEHkqsqD8UgzrugsHO5Jc0F7MqwJJTk5VMYNahR0grBkeSp8qQ0J88gBmDkcLJAUYiQhoBF++/YYmzN01uRm0wKs/1mMGqyjrCyeEna6xxTjaJ7JiZpjyN2UvyYXovtKcnK7RC7xQiV1qWNj7jJ/KF6/gfgeRuOf5CXCW9mguUvyX3xq0N+H9jd6ozLLVh5sQXAHS3CkHhNJtigk3/egiUKbK2dNdDuehguKI91HcsobmxU/Wup3BWJdgb9ThiuIAcc9/XR/5D/N/8+PdmWPaZPySNjMZwKBD9a4ECKqPdr4iff9jt0smppBaIMcpBpWwvR8PrC1AHuTIwjBRHbMnOToeZFeFjO7thNI7xQnLCMsU1fgtEsz7kRbycIXjObrjT+6JM5IrcSIvFyofr0xeR37Ua8tuZjs/8pwhmM3ZOSnzVXsPIzuN6KtnpUrYBLJPtDlistvifyxRcdYX4N3CuEVlNxuHFdaB7JO2HmaMeb30tYbL3q7jXsBr8CQw8WCthOykEvd6CE13mfA/v1YCVJRhoHk2qNdbr90BEPZlYI4bm04hqZTR7X62T79o10F0QTdfE=
+  distributions: sdist
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: master
