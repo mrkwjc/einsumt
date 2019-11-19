@@ -1,5 +1,5 @@
 # einsumt
-Multithreaded version of numpy.einsum
+Multithreaded version of numpy.einsum function.
 
 # Reasoning
 Numpy's einsum is a fantastic function which allows for sophisticated array operations with a single, clear line of code. However, this function in general does not benefit from the underlaying multicore architecture and all operations are performed on a single CPU.
@@ -23,6 +23,7 @@ In order to test, if `einsumt` would be beneficial in your particular case pleas
     bench_einsumt('aijk,bkl->ail',
                   np.random.rand(100, 100, 10, 10),
                   np.random.rand(50, 10, 50))
+and the result is:
 
     Platform:           Linux
     CPU type:           Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz
@@ -35,7 +36,6 @@ In order to test, if `einsumt` would be beneficial in your particular case pleas
         np.einsum:      2755 ms  (average from 1 runs)
         einsumt:        507.9 ms  (average from 5 runs)
     Speed up:           5.424x
-
 More exemplary benchmark calls are contained in bench_einsum.py file.
 
 # Disclaimer
