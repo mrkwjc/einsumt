@@ -76,6 +76,8 @@ def einsumt(*operands, **kwargs):
     if '->' not in subs:  # implicit output
         iss = ''.join(isubs)
         osub = ''.join(sorted([s for s in set(iss) if iss.count(s) == 1]))
+    isubs = [s.strip() for s in isubs] # be sure isubs are stripped
+    osub = osub.strip() # be sure osub is stripped
     # Get index along which we will chunk operands
     # If not given we try to search for longest dimension
     if idx is not None:  # and idx in indices...

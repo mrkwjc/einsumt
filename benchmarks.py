@@ -47,3 +47,10 @@ b = np.random.rand(10000, 10, 10)
 subs = 'aij,ajk->ik'
 bench_einsumt(subs, a, b, idx='a')
 # np.matmul(a, b).sum(0) can be much faster then einsumt!
+
+
+print('TEST 6')
+a = np.random.rand(10000, 3, 3, 3, 3, 3)
+b = np.random.rand(10000, 3, 6, 3, 3, 3)
+subs = 'egmipq, egpqrs -> egmirs'
+bench_einsumt(subs, b, a)

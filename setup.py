@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="einsumt",
-    version="0.9.1",
+    version="0.9.2",
     author="Marek Wojciechowski",
     author_email="mrkwjc@gmail.com",
     description="Multithreaded version of numpy.einsum function",

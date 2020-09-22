@@ -113,6 +113,16 @@ class TestEinsumt(object):
         a = np.random.rand(10, 100, 10)
         subs = 'i...i'
         assert np.allclose(np.einsum(subs, a), einsumt(subs, a))
+    
+    def test_many_indices(self):
+        A = np.random.rand(100, 3, 3, 3, 3, 3)
+        u = np.random.rand(100, 3, 6, 3, 3, 3)
+        v = np.random.rand(100, 3, 6, 3, 3, 3)
+        A1 = einsumt('egmipq, egpqrs -> egmirs', u, A)
+        k1 = einsumt('egmirs, egnjrs -> eminj', A1, v)
+        A2 = np.einsum('egmipq, egpqrs -> egmirs', u, A)
+        k2 = np.einsum('egmirs, egnjrs -> eminj', A2, v)
+        assert np.allclose(k1, k2)
 
 
 if __name__ == '__main__':
