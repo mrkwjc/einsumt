@@ -123,6 +123,12 @@ class TestEinsumt(object):
         A2 = np.einsum('egmipq, egpqrs -> egmirs', u, A)
         k2 = np.einsum('egmirs, egnjrs -> eminj', A2, v)
         assert np.allclose(k1, k2)
+    
+    def test_broadcasting(self):
+        a = np.random.rand(3, 3, 1, 1)
+        b = np.random.rand(3, 3, 6, 100)
+        subs = 'ijrs,ijrs->rs'
+        assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b))
 
 
 if __name__ == '__main__':
