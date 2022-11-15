@@ -123,8 +123,9 @@ def einsumt(*operands, **kwargs):
         for j in range(len(ops)):
             oj = ops[j]
             if cpos[j] >= 0:
-                jslice = cpos_slice[j] + (islice,)
-                oj = oj[jslice]
+                if oj.shape[cpos[j]] > 1:
+                    jslice = cpos_slice[j] + (islice,)
+                    oj = oj[jslice]
             args = args + (oj,)
         res += [pool.apply_async(np.einsum, args=args, kwds=kwargs)]
     res = [r.get() for r in res]
