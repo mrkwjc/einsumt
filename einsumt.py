@@ -34,9 +34,14 @@ def einsumt(*operands, **kwargs):
                into chunks
 
                Argument 'idx' have to be a single subscript letter, and should
-               be contained in the given subscripts, otherwise ValueError is
-               risen. If 'idx' is None or it is not given, then the longest
-               dimension in operands is searched.
+               be contained in the given input subscripts, otherwise ValueError
+               is rised. If 'idx' is None or it is not given, then the longest
+               dimension in operands is searched. NOTE: index which repeats
+               in any of the input subscripts cannot be used for chunking
+               operands. If such an index is explicitly given by 'idx'
+               then ValueError is raised. If no correct index is found when
+               automaitic searching is used then einsumt falls back to
+               np.einsum (this is rather exceptional case though).
 
     WARNING: Current implementation allows for string subscripts
              specification only
@@ -84,6 +89,10 @@ def einsumt(*operands, **kwargs):
         if idx not in iosubs[0]:
             raise ValueError("Index '%s' is not present in input subscripts"
                              % idx)
+        if sum([i.count(idx)>1 for i in isubs]):
+            raise ValueError("Index '%s' cannot be used. It repeats at least "
+                             "in one of the input operands"
+                             % idx)
         cidx = idx  # given index for chunks
         cdims = []
         for si, oi in zip(isubs, ops):
@@ -99,8 +108,12 @@ def einsumt(*operands, **kwargs):
         for si, oi in zip(isubs, ops):
             mdim = max(oi.shape)
             midx = si[oi.shape.index(mdim)]
-            maxdim.append(mdim)
-            maxidx.append(midx)
+            if not sum([i.count(midx)>1 for i in isubs]):  # if not repeated
+                maxdim.append(mdim)
+                maxidx.append(midx)
+        if len(maxidx) == 0:
+            # No proper index is found -> fall back to np.einsum
+            return np.einsum(*operands, **kwargs)
         cdim = max(maxdim)                    # max dimension of input arrays
         cidx = maxidx[maxdim.index(cdim)]     # index chosen for chunks
     # Position of established index in subscripts

@@ -130,6 +130,62 @@ class TestEinsumt(object):
         subs = 'ijrs,ijrs->rs'
         assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b))
 
+    def test_broadcasting2(self):
+        a = np.random.rand(3, 3, 1, 1)
+        b = np.random.rand(6, 100)
+        subs = 'ijrs,rs->rs'
+        assert np.allclose(np.einsum(subs, a, b), einsumt(subs, a, b))
+
+    def test_repeated_idx(self):
+        a = np.random.random((10,10))
+        r1 = np.einsum("kk->", a)
+        r2 = einsumt("kk->", a)
+        assert np.allclose(r1, r2)
+
+    def test_repeated_idx2(self):
+        a = np.random.random((10,10,100))
+        r1 = np.einsum("kki->i", a)
+        r2 = einsumt("kki->i", a)
+        assert np.allclose(r1, r2)
+
+    def test_repeated_idx3(self):
+        a = np.random.random((10,10,100))
+        r1 = np.einsum("kki->i", a)
+        r2 = einsumt("kki->i", a, idx='i')
+        assert np.allclose(r1, r2)
+
+    def test_repeated_idx4(self):
+        a = np.random.random((10,10,100))
+        with pytest.raises(ValueError):
+            einsumt("kki->i", a, idx='k')
+
+    def test_repeated_idx5(self):
+        a = np.random.random((10,10,100))
+        b = np.random.random((10,100))
+        with pytest.raises(ValueError):
+            einsumt("kki,ki->i", a, b, idx='k')
+
+    def test_repeated_idx6(self):
+        a = np.random.random((10,10,100))
+        b = np.random.random((10,100))
+        r1 = np.einsum("kki,ki->i", a, b)
+        r2 = einsumt("kki,ki->i", a, b, idx='i')
+        assert np.allclose(r1, r2)
+
+    def test_repeated_idx7(self):
+        a = np.random.random((10,10,100))
+        b = np.random.random((10,10,100))
+        r1 = np.einsum("kki,kki->i", a, b)
+        r2 = einsumt("kki,kki->i", a, b, idx='i')
+        assert np.allclose(r1, r2)
+
+    def test_repeated_idx8(self):
+        a = np.random.random((10,10,100))
+        b = np.random.random((10,10,100))
+        r1 = np.einsum("kki,kki->i", a, b)
+        r2 = einsumt("kki,kki->i", a, b)
+        assert np.allclose(r1, r2)
+
 
 if __name__ == '__main__':
     pytest.main([str(__file__), '-v'])
